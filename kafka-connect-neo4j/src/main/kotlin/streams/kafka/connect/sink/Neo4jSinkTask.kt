@@ -41,6 +41,9 @@ class Neo4jSinkTask : SinkTask() {
                     .build()
 
             neo4jSinkService.writeData(data)
+            errorService.report(collection.map {
+                ErrorData(it.topic(), it.timestamp(), it.key(), it.value(), it.kafkaPartition(), it.kafkaOffset(), this::class.java, this.config.database, null)
+            })
         } catch(e:Exception) {
             errorService.report(collection.map {
                 ErrorData(it.topic(), it.timestamp(), it.key(), it.value(), it.kafkaPartition(), it.kafkaOffset(), this::class.java, this.config.database, e)
