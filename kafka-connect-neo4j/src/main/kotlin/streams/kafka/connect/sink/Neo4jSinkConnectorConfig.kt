@@ -27,6 +27,8 @@ class Neo4jSinkConnectorConfig(originals: Map<*, *>): Neo4jConnectorConfig(confi
 
     val kafkaBrokerProperties: Map<String, Any?>
 
+    val dropUnwind: Boolean
+
     init {
         topics = Topics.from(originals as Map<String, Any?>, "streams.sink." to "neo4j.")
         strategyMap = TopicUtils.toStrategyMap(topics)
@@ -37,6 +39,7 @@ class Neo4jSinkConnectorConfig(originals: Map<*, *>): Neo4jConnectorConfig(confi
                 .filterKeys { it.startsWith(kafkaPrefix) }
                 .mapKeys { it.key.substring(kafkaPrefix.length) }
         validateAllTopics(originals)
+        dropUnwind = getBoolean(CYPHER_DROP_UNWIND)
     }
 
     private fun validateAllTopics(originals: Map<*, *>) {
@@ -71,12 +74,13 @@ class Neo4jSinkConnectorConfig(originals: Map<*, *>): Neo4jConnectorConfig(confi
         const val TOPIC_PATTERN_MERGE_RELATIONSHIP_PROPERTIES_ENABLED = "neo4j.topic.pattern.merge.relationship.properties.enabled"
         const val TOPIC_CDC_SCHEMA = "neo4j.topic.cdc.schema"
         const val TOPIC_CUD = "neo4j.topic.cud"
+        const val CYPHER_DROP_UNWIND = "neo4j.cypher.dropUnwind"
 
 
         const val DEFAULT_BATCH_PARALLELIZE = true
         const val DEFAULT_TOPIC_PATTERN_MERGE_NODE_PROPERTIES_ENABLED = false
         const val DEFAULT_TOPIC_PATTERN_MERGE_RELATIONSHIP_PROPERTIES_ENABLED = false
-
+        const val DEFAULT_CYPHER_DROP_UNWIND = false
 
 
         private val sourceIdIngestionStrategyConfig = SourceIdIngestionStrategyConfig()
@@ -114,5 +118,9 @@ class Neo4jSinkConnectorConfig(originals: Map<*, *>): Neo4jConnectorConfig(confi
                         .documentation(PropertiesUtil.getProperty(TOPIC_PATTERN_MERGE_RELATIONSHIP_PROPERTIES_ENABLED)).importance(ConfigDef.Importance.MEDIUM)
                         .defaultValue(DEFAULT_TOPIC_PATTERN_MERGE_RELATIONSHIP_PROPERTIES_ENABLED).group(ConfigGroup.TOPIC_CYPHER_MAPPING)
                         .build())
+                    .define(ConfigKeyBuilder.of(CYPHER_DROP_UNWIND, ConfigDef.Type.BOOLEAN)
+                            .documentation(PropertiesUtil.getProperty(CYPHER_DROP_UNWIND)).importance(ConfigDef.Importance.LOW)
+                            .defaultValue(DEFAULT_CYPHER_DROP_UNWIND).group(ConfigGroup.BATCH)
+                            .build())
     }
 }
